@@ -1,0 +1,14 @@
+# Caddy reverse proxy for push-panel.
+# Caddy automatically obtains & renews a Let's Encrypt TLS certificate.
+#
+# 1. Replace push.yourdomain.com with your real (sub)domain.
+# 2. Copy this to /etc/caddy/Caddyfile
+# 3. sudo systemctl reload caddy
+#
+# DNS: an A record for push.yourdomain.com must already point at this server's
+# public IP, and ports 80 + 443 must be open, before Caddy can get a cert.
+
+push.yourdomain.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:3000
+}

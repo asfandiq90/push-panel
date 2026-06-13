@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { jsonResponse, preflightResponse } from "@/lib/cors";
+import { isAuthed } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +10,9 @@ export function OPTIONS() {
 }
 
 export async function GET() {
+  if (!(await isAuthed())) {
+    return jsonResponse({ error: "Unauthorized" }, { status: 401 });
+  }
   const db = getDb();
   const total = db.prepare("SELECT COUNT(*) AS n FROM subscribers").get() as { n: number };
   const byOrigin = db

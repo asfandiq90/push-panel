@@ -23,6 +23,10 @@ export function buildWhere(filters: SegmentFilters | null | undefined): {
     clauses.push("os = ?");
     params.push(filters.os);
   }
+  if (filters?.country) {
+    clauses.push("country = ?");
+    params.push(filters.country);
+  }
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
   return { where, params };
 }
@@ -43,7 +47,7 @@ export function selectAudience(filters: SegmentFilters | null | undefined): Subs
 }
 
 /** Distinct values present in the subscriber base, for building segment dropdowns. */
-export function facets(): { browsers: string[]; oses: string[] } {
+export function facets(): { browsers: string[]; oses: string[]; countries: string[] } {
   const db = getDb();
   const browsers = (
     db.prepare("SELECT DISTINCT browser FROM subscribers WHERE browser IS NOT NULL ORDER BY browser").all() as {
@@ -55,5 +59,12 @@ export function facets(): { browsers: string[]; oses: string[] } {
       os: string;
     }[]
   ).map((r) => r.os);
-  return { browsers, oses };
+  const countries = (
+    db
+      .prepare(
+        "SELECT country, COUNT(*) AS n FROM subscribers WHERE country IS NOT NULL GROUP BY country ORDER BY n DESC"
+      )
+      .all() as { country: string; n: number }[]
+  ).map((r) => r.country);
+  return { browsers, oses, countries };
 }

@@ -32,6 +32,7 @@ export function CampaignForm({
   const [domainId, setDomainId] = useState<string>("all");
   const [browser, setBrowser] = useState("");
   const [os, setOs] = useState("");
+  const [country, setCountry] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [icon, setIcon] = useState("");
@@ -45,7 +46,7 @@ export function CampaignForm({
   const [sendNow, setSendNow] = useState(true);
   const [scheduledAt, setScheduledAt] = useState("");
 
-  const [facets, setFacets] = useState<{ browsers: string[]; oses: string[] }>({ browsers: [], oses: [] });
+  const [facets, setFacets] = useState<{ browsers: string[]; oses: string[]; countries: string[] }>({ browsers: [], oses: [], countries: [] });
   const [audienceCount, setAudienceCount] = useState<number | null>(null);
 
   const [busy, setBusy] = useState(false);
@@ -64,6 +65,7 @@ export function CampaignForm({
     if (domainId !== "all") p.set("domainId", domainId);
     if (browser) p.set("browser", browser);
     if (os) p.set("os", os);
+    if (country) p.set("country", country);
     let cancelled = false;
     fetch(`/api/audience?${p.toString()}`)
       .then((r) => r.json())
@@ -76,7 +78,7 @@ export function CampaignForm({
     return () => {
       cancelled = true;
     };
-  }, [domainId, browser, os]);
+  }, [domainId, browser, os, country]);
 
   function loadTemplate(idStr: string) {
     const t = templates.find((x) => String(x.id) === idStr);
@@ -149,6 +151,7 @@ export function CampaignForm({
           domainId: domainId === "all" ? null : Number(domainId),
           browser: browser || undefined,
           os: os || undefined,
+          country: country || undefined,
           title,
           body: body || undefined,
           icon: icon || undefined,
@@ -224,7 +227,7 @@ export function CampaignForm({
             </label>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <label className="flex flex-col gap-1">
               <span className={fieldLabel}>Domain</span>
               <select value={domainId} onChange={(e) => setDomainId(e.target.value)} className={inputCls}>
@@ -232,6 +235,17 @@ export function CampaignForm({
                 {domains.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className={fieldLabel}>Country</span>
+              <select value={country} onChange={(e) => setCountry(e.target.value)} className={inputCls}>
+                <option value="">Any</option>
+                {facets.countries.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
                   </option>
                 ))}
               </select>

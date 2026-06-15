@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDomain, domainSubscriberCount } from "@/lib/campaigns";
+import { getDb } from "@/lib/db";
 import { CopyBlock } from "@/components/copy-block";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,14 @@ export default async function DomainDetail({
 
   const panelBase = (process.env.PANEL_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const subs = domainSubscriberCount(domain.id);
+
+  const topCountries = getDb()
+    .prepare(
+      `SELECT COALESCE(country, 'Unknown') AS country, COUNT(*) AS n
+         FROM subscribers WHERE domain_id = ?
+         GROUP BY country ORDER BY n DESC LIMIT 10`
+    )
+    .all(domain.id) as { country: string; n: number }[];
 
   const snippet = `<!-- push-panel notifications -->
 <script src="${panelBase}/push-widget.js"
@@ -68,6 +77,22 @@ export default async function DomainDetail({
         >
           Download sw.js
         </a>
+      </section>
+
+      <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6">
+        <h2 className="font-medium mb-3">Top countries</h2>
+        {topCountries.length === 0 ? (
+          <p className="text-sm text-zinc-500">No subscribers yet.</p>
+        ) : (
+          <ul className="text-sm divide-y divide-zinc-100 dark:divide-zinc-800">
+            {topCountries.map((c) => (
+              <li key={c.country} className="flex justify-between py-2">
+                <span>{c.country}</span>
+                <span className="tabular-nums text-zinc-500">{c.n}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6">

@@ -16,6 +16,7 @@ export async function GET(request: Request) {
   if (p.get("domainId")) filters.domainId = Number(p.get("domainId"));
   if (p.get("browser")) filters.browser = p.get("browser")!;
   if (p.get("os")) filters.os = p.get("os")!;
+  if (p.get("country")) filters.country = p.get("country")!;
 
   return Response.json({ count: countAudience(filters), facets: facets() });
 }

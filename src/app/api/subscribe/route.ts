@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { jsonResponse, preflightResponse } from "@/lib/cors";
 import { parseBrowser, parseOs } from "@/lib/ua";
 import { bumpSubscribed } from "@/lib/stats";
+import { clientIpFromHeaders, lookupIp } from "@/lib/geo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,6 @@ export async function POST(request: Request) {
     db.prepare("DELETE FROM subscribers WHERE endpoint = ?").run(body.oldEndpoint);
   }
 
-  // Resolve which domain this subscriber belongs to (by origin).
   let domainId: number | null = null;
   if (body.siteOrigin) {
     const dom = db.prepare("SELECT id FROM domains WHERE origin = ?").get(body.siteOrigin) as
@@ -49,14 +49,17 @@ export async function POST(request: Request) {
   }
 
   const ua = body.userAgent ?? request.headers.get("user-agent") ?? null;
+  const ip = clientIpFromHeaders(request.headers);
+  const geo = await lookupIp(ip);
 
-  // Count genuinely new subscribers (not re-subscribes / key rotations) for daily stats.
   const already = db.prepare("SELECT 1 FROM subscribers WHERE endpoint = ?").get(sub.endpoint);
 
   db.prepare(
     `INSERT INTO subscribers
-       (endpoint, p256dh, auth, site_origin, user_agent, domain_id, browser, os, last_seen)
-     VALUES (@endpoint, @p256dh, @auth, @site_origin, @user_agent, @domain_id, @browser, @os, unixepoch())
+       (endpoint, p256dh, auth, site_origin, user_agent, domain_id, browser, os,
+        country, region, city, ip, last_seen)
+     VALUES (@endpoint, @p256dh, @auth, @site_origin, @user_agent, @domain_id, @browser, @os,
+             @country, @region, @city, @ip, unixepoch())
      ON CONFLICT(endpoint) DO UPDATE SET
        p256dh      = excluded.p256dh,
        auth        = excluded.auth,
@@ -65,6 +68,10 @@ export async function POST(request: Request) {
        domain_id   = excluded.domain_id,
        browser     = excluded.browser,
        os          = excluded.os,
+       country     = COALESCE(excluded.country, subscribers.country),
+       region      = COALESCE(excluded.region,  subscribers.region),
+       city        = COALESCE(excluded.city,    subscribers.city),
+       ip          = COALESCE(excluded.ip,      subscribers.ip),
        last_seen   = excluded.last_seen`
   ).run({
     endpoint: sub.endpoint,
@@ -75,6 +82,10 @@ export async function POST(request: Request) {
     domain_id: domainId,
     browser: parseBrowser(ua),
     os: parseOs(ua),
+    country: geo.country,
+    region: geo.region,
+    city: geo.city,
+    ip,
   });
 
   if (!already) bumpSubscribed(domainId);

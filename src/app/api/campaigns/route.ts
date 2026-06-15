@@ -26,6 +26,7 @@ type Body = {
   audience?: string;
   browser?: string;
   os?: string;
+  country?: string;
   saveAsTemplate?: string; // template name; if present, also save a template
   sendNow?: boolean;
   scheduledAt?: string | number | null; // ISO string or unix seconds
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
   if (body.domainId != null) filters.domainId = body.domainId;
   if (body.browser) filters.browser = body.browser;
   if (body.os) filters.os = body.os;
+  if (body.country) filters.country = body.country;
   const hasFilters = Object.keys(filters).length > 0;
 
   const input: CampaignInput = {

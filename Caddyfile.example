@@ -7,6 +7,9 @@
 #
 # DNS: an A record for push.yourdomain.com must already point at this server's
 # public IP, and ports 80 + 443 must be open, before Caddy can get a cert.
+#
+# Note: Caddy's reverse_proxy automatically sets X-Forwarded-For with the real
+# client IP — we use that on the server for GeoIP lookups.
 
 push.yourdomain.com {
 	encode gzip

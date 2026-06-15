@@ -118,7 +118,17 @@ function migrate(db: Database.Database) {
   if (!hasColumn(db, "subscribers", "last_seen")) {
     db.exec("ALTER TABLE subscribers ADD COLUMN last_seen INTEGER");
   }
+  if (!hasColumn(db, "subscribers", "city")) {
+    db.exec("ALTER TABLE subscribers ADD COLUMN city TEXT");
+  }
+  if (!hasColumn(db, "subscribers", "region")) {
+    db.exec("ALTER TABLE subscribers ADD COLUMN region TEXT");
+  }
+  if (!hasColumn(db, "subscribers", "ip")) {
+    db.exec("ALTER TABLE subscribers ADD COLUMN ip TEXT");
+  }
   db.exec("CREATE INDEX IF NOT EXISTS idx_subscribers_domain ON subscribers(domain_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_subscribers_country ON subscribers(country)");
 }
 
 function seedDefaultDomain(db: Database.Database) {
@@ -176,6 +186,9 @@ export type SubscriberRow = {
   browser: string | null;
   os: string | null;
   country: string | null;
+  region: string | null;
+  city: string | null;
+  ip: string | null;
   last_seen: number | null;
   created_at: number;
 };
@@ -247,6 +260,7 @@ export type FeedRow = {
 export type SegmentFilters = {
   browser?: string;
   os?: string;
+  country?: string;
   domainId?: number;
   origin?: string;
 };

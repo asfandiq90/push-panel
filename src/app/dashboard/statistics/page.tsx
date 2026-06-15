@@ -17,6 +17,7 @@ export default function StatisticsPage() {
   const t = totals();
   const browsers = breakdown("browser");
   const oses = breakdown("os");
+  const countries = breakdown("country");
   const last30 = series.reduce((a, d) => a + d.subscribed, 0);
 
   return (
@@ -39,6 +40,10 @@ export default function StatisticsPage() {
 
       <Card title="New subscribers — last 30 days">
         <BarChart data={series} />
+      </Card>
+
+      <Card title="By country">
+        <BreakdownBars rows={countries} />
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

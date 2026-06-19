@@ -37,7 +37,9 @@ function buildPayload(c: CampaignRow): string {
     body: c.body ?? undefined,
     icon: c.icon ?? undefined,
     image: c.image ?? undefined,
-    url: track(c.id, "main", c.url ?? panelBase()),
+    // If no launch URL is set, omit the field so the SW opens the subscriber's
+    // own site root ("/") instead of redirecting to the panel.
+    url: c.url ? track(c.id, "main", c.url) : undefined,
     a1: track(c.id, "a1", c.action1_url),
     a2: track(c.id, "a2", c.action2_url),
     actions: actions.length ? actions : undefined,
